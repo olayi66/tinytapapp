@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<meta name="description" content="Tap-to-learn ABC and 123 for toddlers, with letter sounds and a friendly teacher voice.">
+<title>Tiny Taps ABC 123</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Tiny Taps">
+<meta name="theme-color" content="#FFF4DD">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&display=swap">
+<style>
+/* Layout: one full-screen card per letter. Tap anywhere = next letter + voice. Grown-up controls hide behind a press-and-hold button so little hands can't change modes. Single bright crayon look. */
+:root{
+  --paper:#FFF4DD; --ink:#2B2340; --soft:#7A6F8F; --card:#FFFFFF;
+  --red:#FF4F64; --orange:#FF8A1F; --gold:#F5B700; --green:#1FB98E; --blue:#2F7BFF; --purple:#8A54F0;
+  --display:"Baloo 2","Arial Rounded MT Bold","Trebuchet MS",system-ui,sans-serif;
+  color-scheme: light;
+}
+[hidden]{display:none!important}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg,var(--paper));color:var(--ink);font-family:var(--display);margin:0;
+  -webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;touch-action:manipulation;
+  -webkit-touch-callout:none;transition:background .4s}
+.screen{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2vh;padding-inline:16px;padding-block:12px;box-sizing:border-box;cursor:pointer;text-align:center}
+
+/* Start screen */
+#start .logo{font-size:clamp(56px,16vw,120px);font-weight:800;line-height:.9;margin:0}
+#start .logo span{display:inline-block}
+.go{font-size:clamp(28px,7vw,44px);font-weight:800;background:var(--green);color:#fff;border:0;border-radius:999px;padding:14px 44px;box-shadow:0 8px 0 #148766;cursor:pointer;animation:pulse 1.6s ease-in-out infinite}
+.sub{color:var(--soft);font-size:18px;margin:0;font-weight:700}
+
+/* Letter screen */
+.big{font-size:min(38vh,58vw);font-weight:800;line-height:.8;color:var(--c);text-shadow:0 .04em 0 rgba(43,35,64,.18)}
+.big small{font-size:.5em;margin-left:.06em}
+.pics{display:flex;gap:4vw;justify-content:center;flex-wrap:wrap}
+.pic{background:var(--card);border-radius:28px;padding:10px 18px 6px;box-shadow:0 6px 0 rgba(43,35,64,.12);display:flex;flex-direction:column;align-items:center;min-width:0}
+.pic .e{font-size:min(13vh,20vw);line-height:1.1}
+.pic .w{font-size:clamp(22px,5.5vw,36px);font-weight:800;line-height:1.1}
+.pic .w b{color:var(--c)}
+.stack{display:flex;flex-direction:column;align-items:center;gap:2vh}
+.sound{font-family:var(--display);font-weight:800;font-size:clamp(26px,7vw,44px);line-height:1;border:0;border-radius:999px;
+  background:var(--card);color:var(--ink);padding:10px 26px 10px 16px;box-shadow:0 6px 0 rgba(43,35,64,.15);cursor:pointer;display:flex;align-items:center;gap:10px}
+.sound b{color:var(--c)}
+.sound .spk{font-size:.8em;background:var(--c);border-radius:50%;width:1.6em;height:1.6em;display:grid;place-items:center;filter:saturate(1.1)}
+.count{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;max-width:640px;font-size:min(8vh,11vw);line-height:1.1}
+.count span{animation:drop .4s cubic-bezier(.3,1.6,.5,1) both}
+.numword{font-size:clamp(34px,9vw,60px);font-weight:800;color:var(--c);line-height:1}
+.tapme{position:fixed;bottom:calc(14px + env(safe-area-inset-bottom,0px));left:0;right:0;text-align:center;color:var(--soft);font-size:17px;font-weight:700;pointer-events:none}
+.tapme span{display:inline-block;animation:pulse 1.6s ease-in-out infinite}
+
+/* Grown-up button + panel */
+.grown{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));right:10px;width:52px;height:52px;border-radius:50%;border:0;background:rgba(255,255,255,.7);color:var(--soft);font-size:24px;cursor:pointer;z-index:5;overflow:hidden}
+.grown i{position:absolute;inset:0;border-radius:50%;background:conic-gradient(var(--green) var(--p,0%),transparent 0);opacity:.55;pointer-events:none}
+.grown b{position:relative}
+.panel{position:fixed;inset:0;background:rgba(43,35,64,.55);display:flex;align-items:center;justify-content:center;z-index:10;padding:16px}
+.sheet{background:var(--card);border-radius:28px;padding:22px;width:min(420px,100%);display:flex;flex-direction:column;gap:14px;font-family:system-ui,sans-serif;cursor:default;max-height:90%;overflow:auto;box-sizing:border-box}
+.sheet h2{font-family:var(--display);margin:0;font-size:28px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.opt{flex:1;min-height:52px;font-family:var(--display);font-size:22px;font-weight:800;border:3px solid var(--ink);background:var(--card);color:var(--ink);border-radius:16px;cursor:pointer}
+.opt[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.sheet label{font-weight:700;font-size:15px}
+.sheet select{font-size:16px;padding:10px;border-radius:12px;border:2px solid var(--soft);width:100%;background:var(--card);color:var(--ink)}
+.note{font-size:13px;color:var(--soft);margin:0;line-height:1.4}
+.done{min-height:52px;font-family:var(--display);font-size:22px;font-weight:800;border:0;background:var(--green);color:#fff;border-radius:16px;cursor:pointer}
+.sheet h3{margin:4px 0 -6px;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--soft)}
+.row.s .opt{font-size:17px;min-width:0;padding:6px 8px;line-height:1.1}
+.opt small{display:block;font-family:system-ui,sans-serif;font-size:12px;font-weight:600;opacity:.75}
+.sub.small{font-size:14px;max-width:30ch}
+.install{font-family:var(--display);font-weight:800;font-size:19px;border:3px solid var(--ink);background:var(--card);color:var(--ink);border-radius:999px;padding:10px 22px;cursor:pointer;margin-top:6px}
+.steps{margin:0;padding-left:1.4em;display:flex;flex-direction:column;gap:10px;font-size:17px;line-height:1.4}
+.steps b{font-weight:800}
+.ico{display:inline-grid;place-items:center;min-width:1.7em;height:1.7em;padding:0 .3em;border-radius:8px;background:var(--paper);border:2px solid var(--ink);font-weight:800;font-size:.9em;vertical-align:middle}
+.warn{background:#FFF0DF;border-radius:14px;padding:12px;font-size:16px;line-height:1.4;margin:0}
+.linkbox{display:flex;gap:8px;align-items:center}
+.linkbox input{flex:1;min-width:0;font-size:16px;padding:10px;border-radius:12px;border:2px solid var(--soft);background:var(--card);color:var(--ink)}
+.linkbox button{min-height:46px;padding:0 14px;border-radius:12px;border:0;background:var(--ink);color:var(--paper);font-weight:800;font-size:15px;cursor:pointer}
+button:focus-visible,select:focus-visible{outline:4px solid var(--blue);outline-offset:3px}
+
+.pop{animation:pop .5s cubic-bezier(.3,1.7,.5,1)}
+.rise{animation:rise .55s cubic-bezier(.3,1.5,.5,1) .12s both}
+@keyframes pop{0%{transform:scale(.3) rotate(-12deg)}100%{transform:scale(1) rotate(0)}}
+@keyframes rise{0%{transform:translateY(40px) scale(.7);opacity:0}100%{transform:none;opacity:1}}
+@keyframes drop{0%{transform:translateY(-30px) scale(.5);opacity:0}100%{transform:none;opacity:1}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.confetti{position:fixed;pointer-events:none;font-size:28px;z-index:4;animation:fly 1s ease-out forwards}
+@keyframes fly{to{transform:translate(var(--dx),var(--dy)) rotate(260deg);opacity:0}}
+@media (prefers-reduced-motion:reduce){.pop,.rise,.count span,.go,.tapme span,.confetti{animation:none}}
+</style>
+</head>
+<body>
+
+
+<section class="screen" id="start">
+  <h1 class="logo" aria-label="Tiny Taps"><span style="color:var(--red)">A</span><span style="color:var(--gold)">B</span><span style="color:var(--blue)">C</span></h1>
+  <button class="go" id="go">▶ Play</button>
+  <p class="sub">Tap the screen to meet each letter!</p>
+  <p class="sub small">Grown-ups: press and hold ⚙︎ to pick the voice, accent and style.</p>
+  <button class="install" id="install" hidden>📲 Add Tiny Taps to this phone</button>
+</section>
+
+<div class="panel" id="howto" hidden>
+  <div class="sheet" role="dialog" aria-label="Add Tiny Taps to your phone">
+    <h2>Add to your phone</h2>
+    <div id="howto-body"></div>
+    <button class="done" id="howto-close">Got it</button>
+  </div>
+</div>
+
+<section class="screen" id="learn" hidden aria-live="polite">
+  <div class="big" id="big"></div>
+  <div id="extra"></div>
+</section>
+<div class="tapme" id="tapme" hidden><span>👆 Tap anywhere!</span></div>
+
+<button class="grown" id="grown" aria-label="Grown-ups: press and hold for settings"><i></i><b>⚙︎</b></button>
+
+<div class="panel" id="panel" hidden>
+  <div class="sheet" role="dialog" aria-label="Grown-up settings">
+    <h2>Grown-ups</h2>
+    <div class="row">
+      <button class="opt" id="m-abc" aria-pressed="true">ABC</button>
+      <button class="opt" id="m-123" aria-pressed="false">123</button>
+    </div>
+    <div class="row">
+      <button class="opt" id="back">◀ Back one</button>
+      <button class="opt" id="restart">↺ Start over</button>
+    </div>
+    <h3>Accent</h3>
+    <div class="row s" id="accents">
+      <button class="opt" data-acc="us" aria-pressed="false">🇺🇸 American</button>
+      <button class="opt" data-acc="gb" aria-pressed="false">🇬🇧 British</button>
+    </div>
+    <h3>Teacher voice</h3>
+    <div class="row s" id="voices"></div>
+    <h3>Teaching style</h3>
+    <div class="row s" id="styles">
+      <button class="opt" data-style="calm" aria-pressed="false">Calm teacher</button>
+      <button class="opt" data-style="simple" aria-pressed="false">Short &amp; simple</button>
+      <button class="opt" data-style="song" aria-pressed="false">Sing-song</button>
+    </div>
+    <p class="note" id="styledesc"></p>
+    <button class="opt" id="test">🔊 Hear a sample</button>
+    <p class="note" id="vnote">Can't hear the teacher? Turn the volume up and switch the phone off silent mode.</p>
+    <button class="done" id="close">Back to playing</button>
+  </div>
+</div>
+
+<script>window.VOICE_IDS=["af_bella", "af_heart", "bf_emma"];</script>
+<script>
+const COLORS=["--red","--orange","--gold","--green","--blue","--purple"];
+const BGS=["#FFE9EC","#FFF0DF","#FFF7D6","#E3F8F1","#E4EEFF","#EFE7FF"];
+const ABC=[
+ ["A","🍎","Apple","🐜","Ant"],["B","⚽","Ball","🐻","Bear"],["C","🐱","Cat","🚗","Car"],
+ ["D","🐶","Dog","🦆","Duck"],["E","🥚","Egg","🐘","Elephant"],["F","🐟","Fish","🐸","Frog"],
+ ["G","🍇","Grapes","🐐","Goat"],["H","🎩","Hat","🐴","Horse"],["I","🐛","Insect","🦎","Iguana"],
+ ["J","🧃","Juice","🪼","Jellyfish"],["K","🪁","Kite","🔑","Key"],["L","🦁","Lion","🍋","Lemon"],
+ ["M","🐒","Monkey","🌙","Moon"],["N","🪺","Nest","👃","Nose"],["O","🐙","Octopus","🐂","Ox"],
+ ["P","🐷","Pig","🍕","Pizza"],["Q","👑","Queen","🪶","Quill"],["R","🌈","Rainbow","🐇","Rabbit"],
+ ["S","☀️","Sun","🧦","Sock"],["T","🐯","Tiger","🚂","Train"],["U","☂️","Umbrella","⬆️","Up"],
+ ["V","🚐","Van","🎻","Violin"],["W","🐋","Whale","🍉","Watermelon"],["X","🦊","Fox","📦","Box"],
+ ["Y","🪀","Yo-yo","🧶","Yarn"],["Z","🦓","Zebra","🤐","Zipper"]
+];
+/* Letter sounds: [what the voice says, how it's written on screen]. Spoken spellings are tuned for phone voices. */
+const PH={A:["aah","ă"],B:["buh","b"],C:["kuh","k"],D:["duh","d"],E:["eh","ĕ"],F:["fuh","f"],G:["guh","g"],H:["huh","h"],
+ I:["ih","ĭ"],J:["juh","j"],K:["kuh","k"],L:["luh","l"],M:["mmm","m"],N:["nuh","n"],O:["ahh","ŏ"],P:["puh","p"],
+ Q:["kwuh","kw"],R:["ruh","r"],S:["suh","s"],T:["tuh","t"],U:["uh","ŭ"],V:["vuh","v"],W:["wuh","w"],X:["ks","ks"],
+ Y:["yuh","y"],Z:["zuh","z"]};
+const NUMW=["zero","one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen","twenty"];
+const THINGS=[["🐥","chick","chicks"],["🍎","apple","apples"],["⭐","star","stars"],["🐟","fish","fish"],["🎈","balloon","balloons"],["🦋","butterfly","butterflies"],["🍓","strawberry","strawberries"],["🚗","car","cars"],["🌸","flower","flowers"],["🐞","ladybug","ladybugs"]];
+const CHEERS=["Yay!","Woo hoo!","Great job!","Hooray!","You did it!","Awesome!"];
+
+const $=id=>document.getElementById(id);
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+let mode=store.get("tt-mode")||"abc";
+let idx=-1;
+
+/* ---------- Teacher voices: pre-recorded packs (accent × voice × style) ---------- */
+const VOICES=[
+  {id:"af_bella", acc:"us", name:"Bella", desc:"Bright"},
+  {id:"af_heart", acc:"us", name:"Heart", desc:"Warm"},
+  {id:"bf_emma",  acc:"gb", name:"Emma",  desc:"Clear"}
+].filter(v=>!window.VOICE_IDS||window.VOICE_IDS.includes(v.id));
+document.querySelectorAll("#accents .opt").forEach(b=>{ if(!VOICES.some(v=>v.acc===b.dataset.acc)){ b.disabled=true; b.innerHTML+="<small>coming soon</small>"; } });
+const STYLE_DESC={
+  calm:"“B. This is the letter B. B makes the sound /b/. Ball starts with /b/.”",
+  simple:"“B! /b/. Ball. Bear.”",
+  song:"“B, B, what do you say? /b/ /b/ /b/! Ball and bear start with B!”"
+};
+let voiceId=store.get("tt-voice2"); if(!VOICES.some(v=>v.id===voiceId)) voiceId="af_bella";
+let style=store.get("tt-style"); if(!STYLE_DESC[style]) style="calm";
+const PACKS=window.PACKS||{}; const loading={};
+function loadPack(id){
+  if(PACKS[id]) return Promise.resolve(PACKS[id]);
+  if(!loading[id]) loading[id]=fetch(`voices/${id}.json`).then(r=>r.json()).then(p=>(PACKS[id]=p)).catch(()=>{delete loading[id];});
+  return loading[id];
+}
+const player=new Audio(); player.preload="auto";
+let want=null;
+function play(key){
+  want=key;
+  try{ player.pause(); }catch(e){}
+  const go=p=>{
+    if(!p||want!==key) return;
+    const src=(p[style]&&p[style][key])||(p.shared&&p.shared[key]); if(!src) return;
+    try{ player.src=src; player.currentTime=0; const r=player.play(); if(r&&r.catch) r.catch(()=>{}); }catch(e){}
+  };
+  if(PACKS[voiceId]) go(PACKS[voiceId]); else loadPack(voiceId).then(go);
+}
+loadPack(voiceId);
+
+function syncVoiceUI(){
+  const acc=VOICES.find(v=>v.id===voiceId).acc;
+  document.querySelectorAll("#accents .opt").forEach(b=>b.setAttribute("aria-pressed",b.dataset.acc===acc));
+  const box=$("voices"); box.innerHTML="";
+  VOICES.filter(v=>v.acc===acc).forEach(v=>{
+    const b=document.createElement("button"); b.className="opt"; b.id="v-"+v.id;
+    b.innerHTML=`${v.name}<small>${v.desc}</small>`; b.setAttribute("aria-pressed",v.id===voiceId);
+    b.onclick=()=>{ voiceId=v.id; store.set("tt-voice2",voiceId); syncVoiceUI(); play("LB"); };
+    box.appendChild(b);
+  });
+  document.querySelectorAll("#styles .opt").forEach(b=>b.setAttribute("aria-pressed",b.dataset.style===style));
+  $("styledesc").textContent=STYLE_DESC[style];
+}
+document.querySelectorAll("#accents .opt").forEach(b=>b.onclick=()=>{
+  const first=VOICES.find(v=>v.acc===b.dataset.acc); if(first.acc!==VOICES.find(v=>v.id===voiceId).acc){ voiceId=first.id; store.set("tt-voice2",voiceId); }
+  syncVoiceUI(); play("LB");
+});
+document.querySelectorAll("#styles .opt").forEach(b=>b.onclick=()=>{ style=b.dataset.style; store.set("tt-style",style); syncVoiceUI(); play("LB"); });
+function stopVoice(){ try{ player.pause(); }catch(e){} }
+
+/* ---------- Show one card ---------- */
+function confetti(){
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const bits=["⭐","🎉","✨","💛","🎈"];
+  for(let i=0;i<10;i++){
+    const s=document.createElement("span"); s.className="confetti"; s.textContent=bits[i%bits.length];
+    s.style.left=(40+Math.random()*20)+"vw"; s.style.top="45vh";
+    s.style.setProperty("--dx",(Math.random()*90-45)+"vw"); s.style.setProperty("--dy",(Math.random()*-50-10)+"vh");
+    document.body.appendChild(s); setTimeout(()=>s.remove(),1100);
+  }
+}
+
+function render(speak){
+  const ci=idx%COLORS.length;
+  document.body.style.setProperty("--bg",BGS[ci]);
+  $("learn").style.setProperty("--c",`var(${COLORS[ci]})`);
+  const big=$("big"), extra=$("extra");
+  if(mode==="abc"){
+    const [L,e1,w1,e2,w2]=ABC[idx], [snd,shown]=PH[L];
+    const mark=w=> L==="X" ? `${w.slice(0,-1)}<b>${w.slice(-1)}</b>` : `<b>${w[0]}</b>${w.slice(1)}`;
+    big.innerHTML=`${L}<small>${L.toLowerCase()}</small>`;
+    extra.className="stack rise";
+    extra.innerHTML=`<button class="sound" id="sound" aria-label="Hear the ${L} sound again"><span class="spk">🔊</span><b>${L.toLowerCase()}</b> says <b>/${shown}/</b></button>
+      <div class="pics">
+        <div class="pic"><span class="e">${e1}</span><span class="w">${mark(w1)}</span></div>
+        <div class="pic"><span class="e">${e2}</span><span class="w">${mark(w2)}</span></div>
+      </div>`;
+    $("sound").addEventListener("pointerup",ev=>{ ev.stopPropagation(); lastTap=Date.now(); sayLetterSound(L); });
+    if(speak) play("L"+L);
+  } else {
+    const n=idx+1, [e,one,many]=THINGS[n%THINGS.length];
+    big.textContent=n;
+    extra.className="rise";
+    extra.innerHTML=`<div class="numword">${NUMW[n][0].toUpperCase()+NUMW[n].slice(1)}</div>
+      <div class="count">${Array.from({length:n},(_,k)=>`<span style="animation-delay:${200+k*90}ms">${e}</span>`).join("")}</div>`;
+    if(speak) play("N"+n);
+  }
+  big.classList.remove("pop"); void big.offsetWidth; big.classList.add("pop");
+}
+
+function sayLetterSound(L){
+  play("S"+L);
+  const b=$("sound"); if(b){ b.classList.remove("pop"); void b.offsetWidth; b.classList.add("pop"); }
+}
+function total(){return mode==="abc"?ABC.length:20}
+function next(){
+  idx++;
+  if(idx>=total()){
+    idx=0; confetti(); render(false);
+    play(mode==="abc"?"doneABC":"done123");
+    return;
+  }
+  render(true);
+  if(idx>0 && idx%5===0) { confetti(); }
+}
+
+/* ---------- Taps ---------- */
+$("go").addEventListener("click",e=>{
+  e.stopPropagation();
+  $("start").hidden=true; $("learn").hidden=false; $("tapme").hidden=false; $("grown").hidden=false;
+  try{ navigator.wakeLock&&navigator.wakeLock.request("screen").catch(()=>{}); }catch(err){}
+  idx=-1; next();
+});
+$("start").addEventListener("click",()=>$("go").click());
+let lastTap=0;
+$("learn").addEventListener("pointerup",()=>{
+  const now=Date.now(); if(now-lastTap<450) return; lastTap=now;  // ignore toddler double-slaps
+  next();
+});
+
+/* Press and hold (1.5s) for grown-up settings */
+let holdT=null, holdStart=0, raf=null;
+const g=$("grown");
+function holdTick(){ const p=Math.min(100,(Date.now()-holdStart)/15); g.style.setProperty("--p",p+"%"); if(p<100) raf=requestAnimationFrame(holdTick); }
+function holdEnd(){ clearTimeout(holdT); cancelAnimationFrame(raf); g.style.setProperty("--p","0%"); }
+g.addEventListener("pointerdown",e=>{ e.stopPropagation(); holdStart=Date.now(); holdTick();
+  holdT=setTimeout(()=>{ holdEnd(); openPanel(); },1500); });
+["pointerup","pointerleave","pointercancel"].forEach(t=>g.addEventListener(t,e=>{e.stopPropagation();holdEnd();}));
+g.addEventListener("click",e=>e.stopPropagation());
+g.addEventListener("keydown",e=>{ if(e.key==="Enter"){e.preventDefault();openPanel();} });
+
+function syncModeButtons(){ $("m-abc").setAttribute("aria-pressed",mode==="abc"); $("m-123").setAttribute("aria-pressed",mode==="123");
+  $("go").textContent=mode==="abc"?"▶ Play ABC":"▶ Play 123"; }
+function openPanel(){ stopVoice(); syncModeButtons(); syncVoiceUI(); $("panel").hidden=false; }
+function setMode(m){ mode=m; store.set("tt-mode",m); syncModeButtons(); idx=-1; }
+$("m-abc").onclick=()=>setMode("abc");
+$("m-123").onclick=()=>setMode("123");
+$("back").onclick=()=>{ idx=Math.max(-1,idx-2); };
+$("restart").onclick=()=>{ idx=-1; };
+$("test").onclick=()=>play(mode==="abc"?"LA":"N3");
+let dirty=false;
+["m-abc","m-123","back","restart"].forEach(id=>$(id).addEventListener("click",()=>dirty=true));
+$("close").onclick=()=>{ $("panel").hidden=true; stopVoice(); if(!$("start").hidden){ syncModeButtons(); return; } if(dirty||idx<0){dirty=false;next();} else render(true); };
+$("panel").addEventListener("pointerup",e=>e.stopPropagation());
+
+syncModeButtons();
+
+/* ---------- "Add to this phone" helper ---------- */
+(function(){
+  const ua=navigator.userAgent;
+  const standalone=(window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true;
+  const framed=(()=>{try{return window.self!==window.top}catch(e){return true}})();
+  if(standalone||framed||location.protocol!=="https:") return;     // already installed, or not on the real website
+  const isIOS=/iPhone|iPad|iPod/.test(ua)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+  const inApp=/FBAN|FBAV|Instagram|Line\/|Snapchat|GSA\/|WhatsApp|LinkedInApp|Twitter/i.test(ua);
+  const iosSafari=isIOS&&!inApp&&/Safari/.test(ua)&&!/CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser|DuckDuckGo/.test(ua);
+  const isAndroid=/Android/.test(ua);
+  const btn=$("install"); let deferred=null;
+  window.addEventListener("beforeinstallprompt",e=>{ e.preventDefault(); deferred=e; btn.hidden=false; });
+  window.addEventListener("appinstalled",()=>{ btn.hidden=true; $("howto").hidden=true; });
+  if(isIOS||isAndroid) btn.hidden=false;
+  const url=location.origin+location.pathname;
+  const linkBox=`<div class="linkbox"><input id="howto-url" readonly value="${url}" aria-label="Tiny Taps link"><button id="howto-copy">Copy</button></div>`;
+  function steps(){
+    if(isIOS&&!iosSafari) return `<p class="warn">On iPhone, apps can only be added from <b>Safari</b>. You're in a different browser right now.</p>
+      <ol class="steps"><li>Copy this link:</li></ol>${linkBox}
+      <ol class="steps" start="2"><li>Open <b>Safari</b> (the blue compass app) and paste the link in the address bar.</li>
+      <li>Tap this same <b>📲 Add Tiny Taps</b> button there.</li></ol>`;
+    if(isIOS) return `<ol class="steps">
+      <li>Tap the <b>Share</b> button <span class="ico" aria-hidden="true"><svg width="16" height="20" viewBox="0 0 16 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13V2M4.5 5.5 8 2l3.5 3.5"/><path d="M5 8H2.5v10.5h11V8H11"/></svg></span> in Safari's toolbar (bottom of the screen, or top on iPad).</li>
+      <li>Scroll down and tap <b>Add to Home Screen</b> <span class="ico">＋</span>. If you don't see it, tap <b>Edit Actions</b> at the very bottom to add it.</li>
+      <li>Tap <b>Add</b> in the top-right corner.</li>
+      <li>Find the <b>ABC</b> icon on your home screen and open Tiny Taps from there.</li></ol>`;
+    if(isAndroid&&inApp) return `<p class="warn">This page is open inside another app. Open it in <b>Chrome</b> instead.</p>${linkBox}
+      <ol class="steps"><li>Copy the link, open <b>Chrome</b>, and paste it.</li><li>Tap this same <b>📲 Add Tiny Taps</b> button there.</li></ol>`;
+    if(isAndroid) return `<ol class="steps">
+      <li>Tap the <b>⋮</b> menu in the top-right corner of Chrome.</li>
+      <li>Tap <b>Install app</b> or <b>Add to Home screen</b>.</li>
+      <li>Tap <b>Install</b> (or <b>Add</b>).</li>
+      <li>Open Tiny Taps from the <b>ABC</b> icon on your home screen.</li></ol>`;
+    return `<p class="warn">Open this link on the phone or tablet the child will use:</p>${linkBox}`;
+  }
+  btn.addEventListener("click",async e=>{
+    e.stopPropagation();
+    if(deferred){ deferred.prompt(); try{ await deferred.userChoice; }catch(_){} deferred=null; return; }
+    $("howto-body").innerHTML=steps(); $("howto").hidden=false;
+    const c=$("howto-copy"); if(c) c.onclick=ev=>{ ev.stopPropagation(); const inp=$("howto-url");
+      const ok=()=>{ c.textContent="Copied ✓"; };
+      if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(ok,()=>{inp.select();ok();}); else { inp.select(); try{document.execCommand("copy")}catch(_){} ok(); } };
+  });
+  $("howto").addEventListener("click",e=>e.stopPropagation());
+  $("howto").addEventListener("pointerup",e=>e.stopPropagation());
+  $("howto-close").onclick=e=>{ e.stopPropagation(); $("howto").hidden=true; };
+})();
+
+/* Offline support + keep the other voices ready */
+if("serviceWorker" in navigator && window.isSecureContext && location.protocol!=="file:"){
+  navigator.serviceWorker.register("sw.js").catch(()=>{});
+  if(!window.PACKS||!Object.keys(window.PACKS).length){
+    setTimeout(()=>VOICES.forEach(v=>loadPack(v.id)),4000);
+  }
+}
+</script>
+
+</body>
+</html>

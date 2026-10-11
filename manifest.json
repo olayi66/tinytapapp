@@ -1,0 +1,32 @@
+{
+ "id": "./",
+ "name": "Tiny Taps ABC 123",
+ "short_name": "Tiny Taps",
+ "description": "Tap-to-learn ABC and 123 for toddlers.",
+ "start_url": "./",
+ "scope": "./",
+ "display": "standalone",
+ "orientation": "portrait",
+ "background_color": "#FFF4DD",
+ "theme_color": "#FFF4DD",
+ "icons": [
+  {
+   "src": "icon-192.png",
+   "sizes": "192x192",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "maskable"
+  }
+ ]
+}
